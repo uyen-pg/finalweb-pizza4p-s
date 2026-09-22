@@ -1,0 +1,41 @@
+name: Install menu editor
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add menu editor script to index
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("index.html")
+          s = p.read_text(encoding="utf-8")
+          tag = '<script src="menu-admin-editor.js"></script>'
+          if tag not in s:
+              s = s.rstrip() + "\n" + tag + "\n"
+              p.write_text(s, encoding="utf-8")
+          PY
+
+      - name: Commit editor installation
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "Menu editor already installed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Install no-code menu editor"
+          git push
